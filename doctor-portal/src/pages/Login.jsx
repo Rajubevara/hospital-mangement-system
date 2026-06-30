@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Activity, ShieldAlert, KeyRound, Mail } from 'lucide-react';
 
@@ -64,7 +64,12 @@ const Login = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Password</label>
+                <Link to="/forgot-password" style={{ cursor: 'pointer' }} className="text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors">
+                  Forgot Password?
+                </Link>
+              </div>
               <div className="relative">
                 <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
                 <input
