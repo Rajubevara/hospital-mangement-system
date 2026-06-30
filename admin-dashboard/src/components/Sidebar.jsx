@@ -8,10 +8,11 @@ import {
   Calendar, 
   Users, 
   LogOut, 
-  Activity 
+  Activity,
+  X
 } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, setIsOpen }) => {
   const { logout } = useAuth();
 
   const links = [
@@ -23,16 +24,28 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 text-slate-100 flex flex-col h-screen sticky top-0">
+    <aside className={`fixed inset-y-0 left-0 w-64 bg-slate-900 border-r border-slate-800 text-slate-100 flex flex-col h-screen z-40 transition-transform duration-300 transform lg:translate-x-0 lg:static ${
+      isOpen ? 'translate-x-0' : '-translate-x-full'
+    }`}>
       {/* Brand Logo */}
-      <div className="p-6 flex items-center gap-3 border-b border-slate-800">
-        <div className="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
-          <Activity className="h-6 w-6 text-white animate-pulse" />
+      <div className="p-6 flex items-center justify-between border-b border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
+            <Activity className="h-6 w-6 text-white animate-pulse" />
+          </div>
+          <div>
+            <h1 className="font-bold text-lg tracking-wide bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">CareFlow</h1>
+            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Admin Control</p>
+          </div>
         </div>
-        <div>
-          <h1 className="font-bold text-lg tracking-wide bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">CareFlow</h1>
-          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Admin Control</p>
-        </div>
+
+        {/* Mobile Close Button */}
+        <button 
+          onClick={() => setIsOpen(false)}
+          className="lg:hidden text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {/* Nav Links */}
