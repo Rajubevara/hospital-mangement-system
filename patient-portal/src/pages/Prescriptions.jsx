@@ -13,6 +13,10 @@ import {
 } from 'lucide-react';
 
 const Prescriptions = () => {
+  const serverBaseUrl = import.meta.env.VITE_API_URL 
+    ? import.meta.env.VITE_API_URL.replace('/api', '')
+    : 'http://127.0.0.1:5000';
+
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -100,7 +104,7 @@ const Prescriptions = () => {
 
                   <div className="flex items-center gap-3 ml-auto">
                     <a
-                      href={`http://127.0.0.1:5000/${pr.pdfPath}`}
+                      href={`${serverBaseUrl}/${pr.pdfPath}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
@@ -121,8 +125,8 @@ const Prescriptions = () => {
                     {/* Medicines Table */}
                     <div className="space-y-3">
                       <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Prescribed Medicines</span>
-                      <div className="border border-slate-850 rounded-2xl overflow-hidden bg-slate-900/60">
-                        <table className="w-full text-left border-collapse text-xs">
+                      <div className="border border-slate-850 rounded-2xl overflow-x-auto bg-slate-900/60">
+                        <table className="w-full text-left border-collapse text-xs min-w-[500px]">
                           <thead>
                             <tr className="bg-slate-950/30 border-b border-slate-850 text-slate-400 font-bold uppercase tracking-wider">
                               <th className="py-2.5 px-4">Medicine</th>

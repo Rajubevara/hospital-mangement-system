@@ -182,7 +182,7 @@ const Appointments = () => {
                 </div>
 
                 {/* Date slot */}
-                <div className="grid grid-cols-2 gap-4 text-xs bg-slate-950/40 p-3.5 border border-slate-850 rounded-2xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-950/40 p-3.5 border border-slate-850 rounded-2xl">
                   <div>
                     <span className="text-[10px] font-semibold text-slate-500 block uppercase tracking-wider mb-1">Appointment Slot</span>
                     <div className="flex items-center gap-1.5 text-slate-300 font-medium">

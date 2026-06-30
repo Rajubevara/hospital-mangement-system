@@ -141,7 +141,7 @@ const Schedule = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">Schedule & Profile</h1>
           <p className="text-slate-400 mt-1">Configure your weekly consulting hours, fee structures, and biography details.</p>
@@ -149,7 +149,7 @@ const Schedule = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white font-semibold py-2.5 px-4 rounded-xl flex items-center gap-2 cursor-pointer shadow-lg shadow-teal-500/10 transition-all duration-200"
+          className="bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-teal-500/10 transition-all duration-200 w-full sm:w-auto"
         >
           {saving ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
@@ -186,16 +186,16 @@ const Schedule = () => {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-450 uppercase tracking-wider mb-2">Qualifications</label>
+              <label className="block text-xs font-semibold text-slate-455 uppercase tracking-wider mb-2">Qualifications</label>
               <input
                 type="text"
                 value={qualification}
                 onChange={(e) => setQualification(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-sm text-slate-200 outline-none"
+                className="w-full bg-slate-950 border border-slate-855 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-sm text-slate-200 outline-none"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-455 uppercase tracking-wider mb-2">Experience (Yrs)</label>
                 <input
@@ -203,7 +203,7 @@ const Schedule = () => {
                   min={0}
                   value={experience}
                   onChange={(e) => setExperience(parseInt(e.target.value) || 0)}
-                  className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-sm text-slate-200 outline-none"
+                  className="w-full bg-slate-955 border border-slate-855 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-sm text-slate-200 outline-none"
                 />
               </div>
 
@@ -214,7 +214,7 @@ const Schedule = () => {
                   min={0}
                   value={consultationFee}
                   onChange={(e) => setConsultationFee(parseInt(e.target.value) || 0)}
-                  className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-sm text-slate-200 outline-none"
+                  className="w-full bg-slate-955 border border-slate-855 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-sm text-slate-200 outline-none"
                 />
               </div>
             </div>
