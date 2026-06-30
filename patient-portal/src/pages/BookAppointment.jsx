@@ -157,9 +157,9 @@ const BookAppointment = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Doctors Listing */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex flex-col sm:flex-row gap-3">
               {/* Search */}
-              <div className="relative flex-1 min-w-[200px]">
+              <div className="relative w-full sm:flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                 <input
                   type="text"
@@ -174,7 +174,7 @@ const BookAppointment = () => {
               <select
                 value={selectedSpecialty}
                 onChange={(e) => setSelectedSpecialty(e.target.value)}
-                className="bg-slate-900 border border-slate-850 text-sm font-semibold rounded-xl px-4 py-2 text-slate-350 outline-none cursor-pointer"
+                className="bg-slate-900 border border-slate-850 text-sm font-semibold rounded-xl px-4 py-2.5 text-slate-350 outline-none cursor-pointer w-full sm:w-auto"
               >
                 <option value="All">All Departments</option>
                 {specialties.map(spec => (

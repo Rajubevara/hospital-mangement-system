@@ -16,6 +16,10 @@ import {
 } from 'lucide-react';
 
 const Appointments = () => {
+  const serverBaseUrl = import.meta.env.VITE_API_URL 
+    ? import.meta.env.VITE_API_URL.replace('/api', '')
+    : 'http://127.0.0.1:5000';
+
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -238,7 +242,7 @@ const Appointments = () => {
                       <span>Prescription Generated</span>
                     </span>
                     <a
-                      href={`http://127.0.0.1:5000/${app.prescriptionPdfPath || 'uploads/prescription-' + app._id + '.pdf'}`}
+                      href={`${serverBaseUrl}/${app.prescriptionPdfPath || 'uploads/prescription-' + app._id + '.pdf'}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-200 rounded-xl font-semibold border border-slate-750 transition-colors flex items-center gap-1.5"
@@ -308,8 +312,9 @@ const Appointments = () => {
 
                 <div className="space-y-3">
                   {medicines.map((med, idx) => (
-                    <div key={idx} className="grid grid-cols-12 gap-2 p-3 bg-slate-950/40 border border-slate-850 rounded-2xl items-center">
-                      <div className="col-span-4">
+                    <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-2 p-3 bg-slate-950/40 border border-slate-850 rounded-2xl items-center relative pr-10 md:pr-3">
+                      <div className="md:col-span-4">
+                        <label className="md:hidden block text-[10px] text-slate-500 font-medium mb-1">Medicine Name</label>
                         <input
                           type="text"
                           required
@@ -319,27 +324,30 @@ const Appointments = () => {
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-slate-200 placeholder-slate-600 outline-none"
                         />
                       </div>
-                      <div className="col-span-2">
+                      <div className="md:col-span-2">
+                        <label className="md:hidden block text-[10px] text-slate-500 font-medium mb-1">Dosage</label>
                         <input
                           type="text"
                           required
                           placeholder="Dosage (1-0-1)"
                           value={med.dosage}
                           onChange={(e) => handleMedicineChange(idx, 'dosage', e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-2 text-xs text-center text-slate-350 outline-none"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-2 text-xs md:text-center text-slate-350 outline-none"
                         />
                       </div>
-                      <div className="col-span-2">
+                      <div className="md:col-span-2">
+                        <label className="md:hidden block text-[10px] text-slate-500 font-medium mb-1">Duration</label>
                         <input
                           type="text"
                           required
                           placeholder="Duration"
                           value={med.duration}
                           onChange={(e) => handleMedicineChange(idx, 'duration', e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-2 text-xs text-center text-slate-350 outline-none"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-2 text-xs md:text-center text-slate-350 outline-none"
                         />
                       </div>
-                      <div className="col-span-3">
+                      <div className="md:col-span-3">
+                        <label className="md:hidden block text-[10px] text-slate-500 font-medium mb-1">Instructions</label>
                         <input
                           type="text"
                           placeholder="Instructions"
@@ -348,7 +356,7 @@ const Appointments = () => {
                           className="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-3 text-xs text-slate-350 outline-none"
                         />
                       </div>
-                      <div className="col-span-1 text-center">
+                      <div className="absolute right-3 top-[32px] md:static md:col-span-1 text-center">
                         <button
                           type="button"
                           disabled={medicines.length === 1}

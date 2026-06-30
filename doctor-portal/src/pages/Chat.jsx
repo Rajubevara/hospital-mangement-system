@@ -7,7 +7,8 @@ import {
   MessageSquare, 
   User, 
   AlertCircle,
-  Clock 
+  Clock,
+  ArrowLeft
 } from 'lucide-react';
 
 const Chat = () => {
@@ -126,7 +127,7 @@ const Chat = () => {
   return (
     <div className="h-[calc(100vh-10rem)] bg-slate-900 border border-slate-850 rounded-3xl overflow-hidden shadow-xl flex">
       {/* Sidebar List */}
-      <div className="w-80 border-r border-slate-850 flex flex-col bg-slate-900/50">
+      <div className={`w-full md:w-80 border-r border-slate-850 flex flex-col bg-slate-900/50 ${activePartner ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-5 border-b border-slate-850">
           <h3 className="font-bold text-white text-base flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-teal-400" />
@@ -166,11 +167,18 @@ const Chat = () => {
       </div>
 
       {/* Message Feed Area */}
-      <div className="flex-1 flex flex-col justify-between bg-slate-950/20">
+      <div className={`flex-1 flex flex-col justify-between bg-slate-955/20 ${!activePartner ? 'hidden md:flex' : 'flex'}`}>
         {activePartner ? (
           <>
             {/* Header info */}
             <div className="p-4 border-b border-slate-850 bg-slate-900/60 flex items-center gap-3">
+              {/* Back button on mobile */}
+              <button 
+                onClick={() => setActivePartner(null)}
+                className="md:hidden text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer mr-1"
+              >
+                <ArrowLeft size={20} />
+              </button>
               <div className="h-9 w-9 bg-slate-950 border border-slate-850 rounded-xl flex items-center justify-center text-teal-400">
                 <User size={16} />
               </div>

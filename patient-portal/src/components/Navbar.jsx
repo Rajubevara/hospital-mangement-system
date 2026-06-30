@@ -19,7 +19,7 @@ const Navbar = ({ onMenuClick }) => {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="text-right">
+        <div className="text-right hidden sm:block">
           <p className="text-sm font-medium text-slate-200">{user?.name || 'Care Patient'}</p>
           <p className="text-xs text-slate-500">{user?.email}</p>
         </div>
