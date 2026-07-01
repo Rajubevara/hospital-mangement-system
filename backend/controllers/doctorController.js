@@ -3,6 +3,7 @@ import Appointment from '../models/Appointment.js';
 import Prescription from '../models/Prescription.js';
 import Patient from '../models/Patient.js';
 import { generatePrescriptionPDF } from '../services/pdfService.js';
+import { sendEmail } from '../services/emailService.js';
 
 // Get doctor profile details & availability
 export const getDoctorProfile = async (req, res) => {
@@ -64,13 +65,69 @@ export const updateAppointmentStatus = async (req, res) => {
   const { status } = req.body; // 'Confirmed', 'Cancelled', 'Completed'
 
   try {
-    const appointment = await Appointment.findById(id);
+    const appointment = await Appointment.findById(id)
+      .populate({ path: 'patient', populate: { path: 'user' } })
+      .populate({ path: 'doctor', populate: { path: 'user' } });
+
     if (!appointment) {
       return res.status(404).json({ success: false, message: 'Appointment not found' });
     }
 
     appointment.status = status;
     await appointment.save();
+
+    // Notify Patient via Email
+    const patientEmail = appointment.patient?.user?.email;
+    if (patientEmail) {
+      const formattedDate = new Date(appointment.date).toLocaleDateString();
+      const patientName = appointment.patient.user.name;
+      const doctorName = appointment.doctor.user.name;
+
+      let statusColor = '#3b82f6';
+      let statusText = status;
+      if (status === 'Confirmed') {
+        statusColor = '#10b981';
+      } else if (status === 'Cancelled') {
+        statusColor = '#ef4444';
+      } else if (status === 'Completed') {
+        statusColor = '#06b6d4';
+      }
+
+      const patientSubject = `Appointment Status Update: ${status} - Dr. ${doctorName}`;
+      const patientMessage = `Hello ${patientName},\n\nYour appointment with Dr. ${doctorName} on ${formattedDate} (Slot: ${appointment.slot}) has been updated to: ${status}.\n\nThank you for choosing Mediclink.`;
+      
+      const patientHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #0f172a; color: #f1f5f9;">
+          <h2 style="color: #3b82f6; text-align: center;">MEDICLINK HMS</h2>
+          <h3 style="color: #f1f5f9; text-align: center;">Appointment Status Update</h3>
+          <p>Dear ${patientName},</p>
+          <p>The status of your appointment booking with <strong>Dr. ${doctorName}</strong> has been updated.</p>
+          
+          <div style="background-color: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <span style="font-size: 16px; font-weight: bold; color: ${statusColor}; text-transform: uppercase;">
+              Status: ${statusText}
+            </span>
+          </div>
+
+          <div style="background-color: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${formattedDate}</p>
+            <p style="margin: 5px 0;"><strong>Time Slot:</strong> ${appointment.slot}</p>
+            <p style="margin: 5px 0;"><strong>Reason:</strong> ${appointment.reason || 'Routine Checkup'}</p>
+          </div>
+          
+          <p style="font-size: 11px; color: #64748b; margin-top: 40px; border-top: 1px solid #334155; padding-top: 20px;">
+            This is an automated notification. Please do not reply directly to this email.
+          </p>
+        </div>
+      `;
+
+      sendEmail({
+        to: patientEmail,
+        subject: patientSubject,
+        text: patientMessage,
+        html: patientHtml
+      }).catch(err => console.error(`Error sending status update email: ${err.message}`));
+    }
 
     res.json({ success: true, appointment });
   } catch (error) {

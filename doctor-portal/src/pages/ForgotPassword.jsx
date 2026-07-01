@@ -8,17 +8,22 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [demoResetLink, setDemoResetLink] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setDemoResetLink('');
     setLoading(true);
 
     try {
       const response = await api.post('/auth/forgot-password', { email });
       if (response.data.success) {
         setSuccess(response.data.message || 'Reset link sent! Please check your email inbox.');
+        if (response.data.resetLink) {
+          setDemoResetLink(response.data.resetLink);
+        }
         setEmail('');
       }
     } catch (err) {
@@ -49,9 +54,23 @@ const ForgotPassword = () => {
           )}
 
           {success && (
-            <div className="mb-4 p-4 bg-teal-950/20 border border-teal-900/40 text-teal-400 rounded-2xl flex items-center gap-3 text-sm">
-              <CheckCircle2 className="h-5 w-5 shrink-0" />
-              <span>{success}</span>
+            <div className="mb-4 p-4 bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 rounded-2xl flex items-center gap-3 text-sm flex-col items-start gap-2">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
+                <span>{success}</span>
+              </div>
+              {demoResetLink && (
+                <div className="mt-3 w-full p-4 bg-blue-500/10 border border-blue-550/25 rounded-2xl space-y-2.5 text-xs text-slate-350">
+                  <span className="font-bold text-blue-450 block uppercase tracking-wider text-[10px]">Demo Mode Access Link:</span>
+                  <p className="leading-relaxed">To simplify client testing without setting up real SMTP credentials, you can proceed directly to password reset using the link below:</p>
+                  <a
+                    href={demoResetLink}
+                    className="block w-full py-2 px-3 bg-blue-600 hover:bg-blue-550 text-white text-center font-bold rounded-xl transition-all shadow-md shadow-blue-500/10"
+                  >
+                    Reset Password Now
+                  </a>
+                </div>
+              )}
             </div>
           )}
 

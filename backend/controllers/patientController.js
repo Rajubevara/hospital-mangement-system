@@ -4,6 +4,7 @@ import Appointment from '../models/Appointment.js';
 import Prescription from '../models/Prescription.js';
 import Specialty from '../models/Specialty.js';
 import User from '../models/User.js';
+import { sendEmail } from '../services/emailService.js';
 
 // Get patient profile
 export const getPatientProfile = async (req, res) => {
@@ -171,6 +172,82 @@ export const bookAppointment = async (req, res) => {
       reason,
       status: 'Pending',
     });
+
+    // Populate user info for emails
+    const patientPopulated = await Patient.findById(patient._id).populate('user');
+    const doctorPopulated = await Doctor.findById(doctorId).populate('user');
+
+    const formattedDate = new Date(date).toLocaleDateString();
+
+    // 1. Notify Doctor
+    if (doctorPopulated?.user?.email) {
+      const loginUrl = process.env.DOCTOR_PORTAL_URL || 'http://localhost:3001';
+      const doctorSubject = `New Appointment Request - ${patientPopulated.user.name}`;
+      const doctorMessage = `Hello Dr. ${doctorPopulated.user.name},\n\nYou have received a new outpatient visit request from ${patientPopulated.user.name}.\nDate: ${formattedDate}\nSlot: ${slot}\nReason: ${reason || 'Routine Checkup'}\n\nPlease log into the clinical dashboard to confirm or manage this appointment:\n${loginUrl}`;
+      const doctorHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #0f172a; color: #f1f5f9;">
+          <h2 style="color: #0d9488; text-align: center;">MEDICLINK HMS</h2>
+          <h3 style="color: #f1f5f9; text-align: center;">New Appointment Request</h3>
+          <p>Dear Dr. ${doctorPopulated.user.name},</p>
+          <p>You have a new appointment booking request awaiting your review.</p>
+          
+          <div style="background-color: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Patient:</strong> ${patientPopulated.user.name}</p>
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${formattedDate}</p>
+            <p style="margin: 5px 0;"><strong>Time Slot:</strong> ${slot}</p>
+            <p style="margin: 5px 0;"><strong>Reason:</strong> ${reason || 'Routine Checkup'}</p>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${loginUrl}" style="background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Open Doctor Portal</a>
+          </div>
+          
+          <p style="font-size: 11px; color: #64748b; margin-top: 40px; border-top: 1px solid #334155; padding-top: 20px;">
+            This is an automated notification. Please do not reply directly to this email.
+          </p>
+        </div>
+      `;
+
+      sendEmail({
+        to: doctorPopulated.user.email,
+        subject: doctorSubject,
+        text: doctorMessage,
+        html: doctorHtml
+      }).catch(err => console.error(`Error sending email to doctor: ${err.message}`));
+    }
+
+    // 2. Notify Patient
+    if (patientPopulated?.user?.email) {
+      const patientSubject = `Appointment Booking Submitted - Dr. ${doctorPopulated.user.name}`;
+      const patientMessage = `Hello ${patientPopulated.user.name},\n\nYour appointment booking request with Dr. ${doctorPopulated.user.name} has been successfully submitted.\nDate: ${formattedDate}\nSlot: ${slot}\nStatus: Pending Approval\n\nWe will notify you once the doctor confirms your visit.`;
+      const patientHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #0f172a; color: #f1f5f9;">
+          <h2 style="color: #3b82f6; text-align: center;">MEDICLINK HMS</h2>
+          <h3 style="color: #f1f5f9; text-align: center;">Booking Request Received</h3>
+          <p>Dear ${patientPopulated.user.name},</p>
+          <p>Your appointment request has been successfully submitted and is currently <strong>Pending Approval</strong> from the doctor.</p>
+          
+          <div style="background-color: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Doctor:</strong> Dr. ${doctorPopulated.user.name}</p>
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${formattedDate}</p>
+            <p style="margin: 5px 0;"><strong>Time Slot:</strong> ${slot}</p>
+          </div>
+          
+          <p>We will send you another email as soon as the doctor confirms or updates your scheduled visit.</p>
+          
+          <p style="font-size: 11px; color: #64748b; margin-top: 40px; border-top: 1px solid #334155; padding-top: 20px;">
+            This is an automated notification. Please do not reply directly to this email.
+          </p>
+        </div>
+      `;
+
+      sendEmail({
+        to: patientPopulated.user.email,
+        subject: patientSubject,
+        text: patientMessage,
+        html: patientHtml
+      }).catch(err => console.error(`Error sending email to patient: ${err.message}`));
+    }
 
     res.status(201).json({ success: true, appointment });
   } catch (error) {

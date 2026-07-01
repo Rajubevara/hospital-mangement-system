@@ -196,14 +196,22 @@ export const forgotPassword = async (req, res) => {
       </div>
     `;
 
-    await sendEmail({
+    const mailResult = await sendEmail({
       to: user.email,
       subject: 'Mediclink HMS - Password Reset Request',
       text: message,
       html,
     });
 
-    res.json({ success: true, message: 'Password reset link sent to your email.' });
+    const isMock = !process.env.EMAIL_USER || !process.env.EMAIL_PASS || !mailResult.success;
+
+    res.json({ 
+      success: true, 
+      message: isMock 
+        ? 'Demo Mode: Reset email generated successfully. Link is provided below.' 
+        : 'Password reset link sent to your email.',
+      resetLink: isMock ? resetUrl : null
+    });
   } catch (error) {
     try {
       const user = await User.findOne({ email });
