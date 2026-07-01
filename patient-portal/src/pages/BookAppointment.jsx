@@ -13,6 +13,20 @@ import {
   BookmarkPlus
 } from 'lucide-react';
 
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 const BookAppointment = () => {
   const [doctors, setDoctors] = useState([]);
   const [specialties, setSpecialties] = useState([]);
@@ -101,9 +115,65 @@ const BookAppointment = () => {
       });
 
       if (response.data.success) {
-        if (response.data.paymentRequired && response.data.url) {
-          setSuccessMsg('Redirecting to secure Stripe Checkout gateway...');
-          window.location.href = response.data.url;
+        if (response.data.paymentRequired) {
+          setSuccessMsg('Initializing Razorpay secure payment gateway...');
+          const scriptLoaded = await loadRazorpayScript();
+          if (!scriptLoaded) {
+            setError('Failed to load Razorpay SDK. Please check your internet connection.');
+            setBookingLoading(false);
+            return;
+          }
+
+          const options = {
+            key: response.data.keyId,
+            amount: response.data.amount,
+            currency: response.data.currency || 'INR',
+            name: 'CareFlow Health System',
+            description: `Consultation Fee with Dr. ${response.data.doctorName}`,
+            order_id: response.data.orderId,
+            handler: async function (razorpayResponse) {
+              setBookingLoading(true);
+              setSuccessMsg('Verifying your payment transaction...');
+              try {
+                const verifyRes = await api.post('/patient/appointments/verify-payment', {
+                  razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+                  razorpay_order_id: razorpayResponse.razorpay_order_id,
+                  razorpay_signature: razorpayResponse.razorpay_signature,
+                  doctorId: selectedDoctor._id,
+                  date: bookingDate,
+                  slot: selectedSlot,
+                  reason,
+                });
+                if (verifyRes.data.success) {
+                  setSuccessMsg(`Appointment booked and paid successfully for ${new Date(bookingDate).toLocaleDateString()} at ${selectedSlot}!`);
+                  setSelectedDoctor(null);
+                  setBookingDate('');
+                  setSelectedSlot('');
+                  setReason('');
+                }
+              } catch (verifyErr) {
+                setError(verifyErr.response?.data?.message || 'Payment verification failed.');
+              } finally {
+                setBookingLoading(false);
+              }
+            },
+            prefill: {
+              name: response.data.patientName,
+              email: response.data.patientEmail,
+              contact: response.data.patientPhone,
+            },
+            theme: {
+              color: '#0f172a',
+            },
+            modal: {
+              ondismiss: function () {
+                setError('Payment process was cancelled.');
+              }
+            }
+          };
+
+          const rzp = new window.Razorpay(options);
+          rzp.open();
         } else {
           setSuccessMsg(`Appointment booked successfully for ${new Date(bookingDate).toLocaleDateString()} at ${selectedSlot}. Pending doctor confirmation.`);
           setSelectedDoctor(null);

@@ -30,34 +30,8 @@ const Bookings = () => {
       setLoading(false);
     }
   };
-// payment api intigaration
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search);
-    const paymentStatusParam = queryParams.get('payment');
-    const sessionId = queryParams.get('session_id');
-
-    if (paymentStatusParam === 'success' && sessionId) {
-      const verifyStripePayment = async () => {
-        setLoading(true);
-        setError('');
-        setSuccessMsg('');
-        try {
-          const response = await api.post('/patient/appointments/verify-payment', { sessionId });
-          if (response.data.success) {
-            setSuccessMsg('Stripe payment verified successfully! Your outpatient visit booking is confirmed.');
-            // Clear query parameters from URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        } catch (err) {
-          setError(err.response?.data?.message || 'Failed to verify payment session.');
-        } finally {
-          fetchBookings();
-        }
-      };
-      verifyStripePayment();
-    } else {
-      fetchBookings();
-    }
+    fetchBookings();
   }, []);
 
   const handleCancel = async (id) => {

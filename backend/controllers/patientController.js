@@ -5,7 +5,8 @@ import Prescription from '../models/Prescription.js';
 import Specialty from '../models/Specialty.js';
 import User from '../models/User.js';
 import { sendEmail } from '../services/emailService.js';
-import Stripe from 'stripe';
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
 
 // Get patient profile
 export const getPatientProfile = async (req, res) => {
@@ -167,46 +168,52 @@ export const bookAppointment = async (req, res) => {
 
     const formattedDate = new Date(date).toLocaleDateString();
 
-    // Check if Stripe is configured and we should run Stripe session
-    if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.startsWith('your_') && process.env.STRIPE_SECRET_KEY !== '') {
+    const patientPopulated = await Patient.findById(patient._id).populate('user');
+
+    // Check if Razorpay is configured and we should run Razorpay order creation
+    if (process.env.RAZORPAY_KEY_ID && !process.env.RAZORPAY_KEY_ID.startsWith('rzp_test_your_') && process.env.RAZORPAY_KEY_ID !== '') {
       try {
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-        const origin = req.headers.origin || 'http://localhost:3002'; // patient portal domain
-        
-        const session = await stripe.checkout.sessions.create({
-          payment_method_types: ['card'],
-          line_items: [
-            {
-              price_data: {
-                currency: 'usd',
-                product_data: {
-                  name: `Medical Consultation - Dr. ${doctorPopulated.user.name}`,
-                  description: `Department: ${doctorPopulated.specialty?.name || 'General'} | Slot: ${slot} on ${formattedDate}`,
-                },
-                unit_amount: (doctorPopulated.consultationFee || 20) * 100, // in cents
-              },
-              quantity: 1,
-            },
-          ],
-          mode: 'payment',
-          success_url: `${origin}/bookings?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${origin}/book-appointment?payment=cancel`,
-          metadata: {
+        const razorpay = new Razorpay({
+          key_id: process.env.RAZORPAY_KEY_ID,
+          key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+
+        // Consultation fee in paisa (1 INR = 100 paise)
+        const amount = (doctorPopulated.consultationFee || 20) * 100;
+
+        const options = {
+          amount,
+          currency: 'INR',
+          receipt: `receipt_apt_${Date.now()}`,
+          notes: {
             patientId: patient._id.toString(),
             doctorId: doctorId.toString(),
             date: new Date(date).toISOString(),
             slot,
             reason: reason || '',
           },
-        });
+        };
 
-        return res.status(200).json({ success: true, url: session.url, paymentRequired: true });
-      } catch (stripeErr) {
-        console.error('Stripe session creation failed, falling back to direct booking:', stripeErr.message);
+        const order = await razorpay.orders.create(options);
+
+        return res.status(200).json({
+          success: true,
+          paymentRequired: true,
+          orderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          keyId: process.env.RAZORPAY_KEY_ID,
+          doctorName: doctorPopulated.user.name,
+          patientName: patientPopulated.user.name,
+          patientEmail: patientPopulated.user.email,
+          patientPhone: patientPopulated.phone || '9999999999',
+        });
+      } catch (razorpayErr) {
+        console.error('Razorpay order creation failed, falling back to direct booking:', razorpayErr.message);
       }
     }
 
-    // Direct booking / Free booking fallback (when Stripe secret is missing or fails)
+    // Direct booking / Free booking fallback (when Razorpay is missing or fails)
     const appointment = await Appointment.create({
       patient: patient._id,
       doctor: doctorId,
@@ -217,7 +224,6 @@ export const bookAppointment = async (req, res) => {
       paymentStatus: 'Pending',
     });
 
-    const patientPopulated = await Patient.findById(patient._id).populate('user');
 
     // 1. Notify Doctor
     if (doctorPopulated?.user?.email) {
@@ -363,33 +369,41 @@ export const cancelAppointment = async (req, res) => {
   }
 };
 
-// Verify Stripe Payment and confirm appointment
+// Verify Razorpay Payment and confirm appointment
 export const verifyPayment = async (req, res) => {
-  const { sessionId } = req.body;
+  const {
+    razorpay_payment_id,
+    razorpay_order_id,
+    razorpay_signature,
+    doctorId,
+    date,
+    slot,
+    reason
+  } = req.body;
 
-  if (!sessionId) {
-    return res.status(400).json({ success: false, message: 'Session ID is required' });
+  if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+    return res.status(400).json({ success: false, message: 'Missing Razorpay parameters.' });
   }
 
   try {
     const patient = await Patient.findOne({ user: req.user._id });
     if (!patient) {
-      return res.status(404).json({ success: false, message: 'Patient profile not found' });
+      return res.status(404).json({ success: false, message: 'Patient profile not found.' });
     }
 
-    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.startsWith('your_') || process.env.STRIPE_SECRET_KEY === '') {
-      return res.status(400).json({ success: false, message: 'Stripe is not configured on the backend.' });
+    if (!process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET === '') {
+      return res.status(400).json({ success: false, message: 'Razorpay secret key is not configured.' });
     }
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest('hex');
 
-    if (session.payment_status !== 'paid') {
-      return res.status(400).json({ success: false, message: 'Payment has not been completed.' });
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Payment signature verification failed.' });
     }
-
-    // Extract metadata from the checkout session
-    const { doctorId, date, slot, reason } = session.metadata;
 
     // Check if appointment already exists to avoid duplicates
     let appointment = await Appointment.findOne({
