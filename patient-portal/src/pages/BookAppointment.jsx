@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { 
   CalendarDays, 
@@ -28,6 +29,7 @@ const loadRazorpayScript = () => {
 };
 
 const BookAppointment = () => {
+  const navigate = useNavigate();
   const [doctors, setDoctors] = useState([]);
   const [specialties, setSpecialties] = useState([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
@@ -116,64 +118,25 @@ const BookAppointment = () => {
 
       if (response.data.success) {
         if (response.data.paymentRequired) {
-          setSuccessMsg('Initializing Razorpay secure payment gateway...');
-          const scriptLoaded = await loadRazorpayScript();
-          if (!scriptLoaded) {
-            setError('Failed to load Razorpay SDK. Please check your internet connection.');
-            setBookingLoading(false);
-            return;
-          }
-
-          const options = {
-            key: response.data.keyId,
-            amount: response.data.amount,
-            currency: response.data.currency || 'INR',
-            name: 'CareFlow Health System',
-            description: `Consultation Fee with Dr. ${response.data.doctorName}`,
-            order_id: response.data.orderId,
-            handler: async function (razorpayResponse) {
-              setBookingLoading(true);
-              setSuccessMsg('Verifying your payment transaction...');
-              try {
-                const verifyRes = await api.post('/patient/appointments/verify-payment', {
-                  razorpay_payment_id: razorpayResponse.razorpay_payment_id,
-                  razorpay_order_id: razorpayResponse.razorpay_order_id,
-                  razorpay_signature: razorpayResponse.razorpay_signature,
-                  doctorId: selectedDoctor._id,
-                  date: bookingDate,
-                  slot: selectedSlot,
-                  reason,
-                });
-                if (verifyRes.data.success) {
-                  setSuccessMsg(`Appointment booked and paid successfully for ${new Date(bookingDate).toLocaleDateString()} at ${selectedSlot}!`);
-                  setSelectedDoctor(null);
-                  setBookingDate('');
-                  setSelectedSlot('');
-                  setReason('');
-                }
-              } catch (verifyErr) {
-                setError(verifyErr.response?.data?.message || 'Payment verification failed.');
-              } finally {
-                setBookingLoading(false);
+          setSuccessMsg('Booking slot locked! Redirecting to secure checkout...');
+          setTimeout(() => {
+            navigate('/payment', {
+              state: {
+                orderId: response.data.orderId,
+                amount: response.data.amount,
+                currency: response.data.currency || 'INR',
+                keyId: response.data.keyId,
+                doctorName: response.data.doctorName,
+                patientName: response.data.patientName,
+                patientEmail: response.data.patientEmail,
+                patientPhone: response.data.patientPhone,
+                doctorId: selectedDoctor._id,
+                date: bookingDate,
+                slot: selectedSlot,
+                reason,
               }
-            },
-            prefill: {
-              name: response.data.patientName,
-              email: response.data.patientEmail,
-              contact: response.data.patientPhone,
-            },
-            theme: {
-              color: '#0f172a',
-            },
-            modal: {
-              ondismiss: function () {
-                setError('Payment process was cancelled.');
-              }
-            }
-          };
-
-          const rzp = new window.Razorpay(options);
-          rzp.open();
+            });
+          }, 1500);
         } else {
           setSuccessMsg(`Appointment booked successfully for ${new Date(bookingDate).toLocaleDateString()} at ${selectedSlot}. Pending doctor confirmation.`);
           setSelectedDoctor(null);

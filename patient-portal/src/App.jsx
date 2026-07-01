@@ -11,6 +11,7 @@ import BookAppointment from './pages/BookAppointment';
 import Bookings from './pages/Bookings';
 import Prescriptions from './pages/Prescriptions';
 import Chat from './pages/Chat';
+import Payment from './pages/Payment';
 
 // Patient Layout Wrapper
 const PatientLayout = () => {
@@ -66,6 +67,7 @@ function App() {
             <Route path="bookings" element={<Bookings />} />
             <Route path="prescriptions" element={<Prescriptions />} />
             <Route path="chat" element={<Chat />} />
+            <Route path="payment" element={<Payment />} />
           </Route>
 
           {/* Fallback redirect */}
