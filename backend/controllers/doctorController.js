@@ -161,7 +161,7 @@ export const writePrescription = async (req, res) => {
     });
 
     // Generate prescription PDF using helper
-    const pdfFilename = `prescription-${prescription._id}.pdf`;
+    const pdfFilename = `prescription-${appointment._id}.pdf`;
     const pdfPath = `uploads/${pdfFilename}`;
 
     await generatePrescriptionPDF(
