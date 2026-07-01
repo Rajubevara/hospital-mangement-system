@@ -8,6 +8,7 @@ import {
   getPatientAppointments,
   getPatientPrescriptions,
   cancelAppointment,
+  verifyPayment,
 } from '../controllers/patientController.js';
 import { protect, authorizeRoles } from '../middleware/auth.js';
 
@@ -23,6 +24,8 @@ router.route('/profile')
 
 router.get('/doctors', searchDoctors);
 router.get('/slots', getAvailableSlots);
+
+router.post('/appointments/verify-payment', verifyPayment);
 
 router.route('/appointments')
   .post(bookAppointment)

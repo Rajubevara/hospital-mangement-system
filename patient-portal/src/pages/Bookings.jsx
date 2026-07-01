@@ -8,7 +8,8 @@ import {
   AlertCircle,
   XCircle,
   FileCheck2,
-  Bookmark
+  Bookmark,
+  CheckCircle2
 } from 'lucide-react';
 
 const Bookings = () => {
@@ -29,9 +30,34 @@ const Bookings = () => {
       setLoading(false);
     }
   };
-
+// payment api intigaration
   useEffect(() => {
-    fetchBookings();
+    const queryParams = new URLSearchParams(window.location.search);
+    const paymentStatusParam = queryParams.get('payment');
+    const sessionId = queryParams.get('session_id');
+
+    if (paymentStatusParam === 'success' && sessionId) {
+      const verifyStripePayment = async () => {
+        setLoading(true);
+        setError('');
+        setSuccessMsg('');
+        try {
+          const response = await api.post('/patient/appointments/verify-payment', { sessionId });
+          if (response.data.success) {
+            setSuccessMsg('Stripe payment verified successfully! Your outpatient visit booking is confirmed.');
+            // Clear query parameters from URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (err) {
+          setError(err.response?.data?.message || 'Failed to verify payment session.');
+        } finally {
+          fetchBookings();
+        }
+      };
+      verifyStripePayment();
+    } else {
+      fetchBookings();
+    }
   }, []);
 
   const handleCancel = async (id) => {
@@ -71,7 +97,7 @@ const Bookings = () => {
       )}
       {successMsg && (
         <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 rounded-2xl flex items-center gap-3 text-sm">
-          <AlertCircle className="h-5 w-5 shrink-0" />
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
           <span>{successMsg}</span>
         </div>
       )}

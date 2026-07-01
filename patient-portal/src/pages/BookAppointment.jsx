@@ -101,11 +101,16 @@ const BookAppointment = () => {
       });
 
       if (response.data.success) {
-        setSuccessMsg(`Appointment booked successfully for ${new Date(bookingDate).toLocaleDateString()} at ${selectedSlot}. Pending doctor confirmation.`);
-        setSelectedDoctor(null);
-        setBookingDate('');
-        setSelectedSlot('');
-        setReason('');
+        if (response.data.paymentRequired && response.data.url) {
+          setSuccessMsg('Redirecting to secure Stripe Checkout gateway...');
+          window.location.href = response.data.url;
+        } else {
+          setSuccessMsg(`Appointment booked successfully for ${new Date(bookingDate).toLocaleDateString()} at ${selectedSlot}. Pending doctor confirmation.`);
+          setSelectedDoctor(null);
+          setBookingDate('');
+          setSelectedSlot('');
+          setReason('');
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Booking failed.');

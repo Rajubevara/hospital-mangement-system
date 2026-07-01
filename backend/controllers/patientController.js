@@ -5,6 +5,7 @@ import Prescription from '../models/Prescription.js';
 import Specialty from '../models/Specialty.js';
 import User from '../models/User.js';
 import { sendEmail } from '../services/emailService.js';
+import Stripe from 'stripe';
 
 // Get patient profile
 export const getPatientProfile = async (req, res) => {
@@ -128,7 +129,7 @@ export const getAvailableSlots = async (req, res) => {
   }
 };
 
-// Book Appointment
+// Book Appointment (with Stripe checkout session redirect)
 export const bookAppointment = async (req, res) => {
   const { doctorId, date, slot, reason } = req.body;
 
@@ -142,8 +143,8 @@ export const bookAppointment = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Patient profile not found' });
     }
 
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) {
+    const doctorPopulated = await Doctor.findById(doctorId).populate('user').populate('specialty');
+    if (!doctorPopulated) {
       return res.status(404).json({ success: false, message: 'Doctor not found' });
     }
 
@@ -164,6 +165,48 @@ export const bookAppointment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'This slot is already booked' });
     }
 
+    const formattedDate = new Date(date).toLocaleDateString();
+
+    // Check if Stripe is configured and we should run Stripe session
+    if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.startsWith('your_') && process.env.STRIPE_SECRET_KEY !== '') {
+      try {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        const origin = req.headers.origin || 'http://localhost:3002'; // patient portal domain
+        
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: `Medical Consultation - Dr. ${doctorPopulated.user.name}`,
+                  description: `Department: ${doctorPopulated.specialty?.name || 'General'} | Slot: ${slot} on ${formattedDate}`,
+                },
+                unit_amount: (doctorPopulated.consultationFee || 20) * 100, // in cents
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: `${origin}/bookings?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${origin}/book-appointment?payment=cancel`,
+          metadata: {
+            patientId: patient._id.toString(),
+            doctorId: doctorId.toString(),
+            date: new Date(date).toISOString(),
+            slot,
+            reason: reason || '',
+          },
+        });
+
+        return res.status(200).json({ success: true, url: session.url, paymentRequired: true });
+      } catch (stripeErr) {
+        console.error('Stripe session creation failed, falling back to direct booking:', stripeErr.message);
+      }
+    }
+
+    // Direct booking / Free booking fallback (when Stripe secret is missing or fails)
     const appointment = await Appointment.create({
       patient: patient._id,
       doctor: doctorId,
@@ -171,13 +214,10 @@ export const bookAppointment = async (req, res) => {
       slot,
       reason,
       status: 'Pending',
+      paymentStatus: 'Pending',
     });
 
-    // Populate user info for emails
     const patientPopulated = await Patient.findById(patient._id).populate('user');
-    const doctorPopulated = await Doctor.findById(doctorId).populate('user');
-
-    const formattedDate = new Date(date).toLocaleDateString();
 
     // 1. Notify Doctor
     if (doctorPopulated?.user?.email) {
@@ -249,7 +289,7 @@ export const bookAppointment = async (req, res) => {
       }).catch(err => console.error(`Error sending email to patient: ${err.message}`));
     }
 
-    res.status(201).json({ success: true, appointment });
+    res.status(201).json({ success: true, appointment, paymentRequired: false });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -322,3 +362,131 @@ export const cancelAppointment = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Verify Stripe Payment and confirm appointment
+export const verifyPayment = async (req, res) => {
+  const { sessionId } = req.body;
+
+  if (!sessionId) {
+    return res.status(400).json({ success: false, message: 'Session ID is required' });
+  }
+
+  try {
+    const patient = await Patient.findOne({ user: req.user._id });
+    if (!patient) {
+      return res.status(404).json({ success: false, message: 'Patient profile not found' });
+    }
+
+    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.startsWith('your_') || process.env.STRIPE_SECRET_KEY === '') {
+      return res.status(400).json({ success: false, message: 'Stripe is not configured on the backend.' });
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (session.payment_status !== 'paid') {
+      return res.status(400).json({ success: false, message: 'Payment has not been completed.' });
+    }
+
+    // Extract metadata from the checkout session
+    const { doctorId, date, slot, reason } = session.metadata;
+
+    // Check if appointment already exists to avoid duplicates
+    let appointment = await Appointment.findOne({
+      patient: patient._id,
+      doctor: doctorId,
+      date: new Date(date),
+      slot,
+    });
+
+    if (appointment) {
+      appointment.paymentStatus = 'Paid';
+      appointment.status = 'Confirmed';
+      await appointment.save();
+    } else {
+      appointment = await Appointment.create({
+        patient: patient._id,
+        doctor: doctorId,
+        date: new Date(date),
+        slot,
+        reason,
+        status: 'Confirmed',
+        paymentStatus: 'Paid',
+      });
+
+      // Send email notifications
+      const patientPopulated = await Patient.findById(patient._id).populate('user');
+      const doctorPopulated = await Doctor.findById(doctorId).populate('user');
+      const formattedDate = new Date(date).toLocaleDateString();
+
+      // Notify Doctor
+      if (doctorPopulated?.user?.email) {
+        const loginUrl = process.env.DOCTOR_PORTAL_URL || 'http://localhost:3001';
+        const doctorSubject = `New Paid Appointment Confirmed - ${patientPopulated.user.name}`;
+        const doctorMessage = `Hello Dr. ${doctorPopulated.user.name},\n\nA new appointment has been booked and paid for by ${patientPopulated.user.name}.\nDate: ${formattedDate}\nSlot: ${slot}\nReason: ${reason || 'Routine Checkup'}\n\nPlease check your schedule:\n${loginUrl}`;
+        const doctorHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #0f172a; color: #f1f5f9;">
+            <h2 style="color: #0d9488; text-align: center;">MEDICLINK HMS</h2>
+            <h3 style="color: #f1f5f9; text-align: center;">New Confirmed Appointment</h3>
+            <p>Dear Dr. ${doctorPopulated.user.name},</p>
+            <p>A new appointment has been scheduled and paid for successfully.</p>
+            
+            <div style="background-color: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Patient:</strong> ${patientPopulated.user.name}</p>
+              <p style="margin: 5px 0;"><strong>Date:</strong> ${formattedDate}</p>
+              <p style="margin: 5px 0;"><strong>Time Slot:</strong> ${slot}</p>
+              <p style="margin: 5px 0;"><strong>Payment Status:</strong> <span style="color: #10b981; font-weight: bold;">PAID</span></p>
+              <p style="margin: 5px 0;"><strong>Reason:</strong> ${reason || 'Routine Checkup'}</p>
+            </div>
+            
+            <p style="font-size: 11px; color: #64748b; margin-top: 40px; border-top: 1px solid #334155; padding-top: 20px;">
+              This is an automated notification. Please do not reply directly to this email.
+            </p>
+          </div>
+        `;
+        sendEmail({
+          to: doctorPopulated.user.email,
+          subject: doctorSubject,
+          text: doctorMessage,
+          html: doctorHtml
+        }).catch(err => console.error(err));
+      }
+
+      // Notify Patient
+      if (patientPopulated?.user?.email) {
+        const patientSubject = `Appointment Confirmed & Paid - Dr. ${doctorPopulated.user.name}`;
+        const patientMessage = `Hello ${patientPopulated.user.name},\n\nYour appointment with Dr. ${doctorPopulated.user.name} has been confirmed.\nDate: ${formattedDate}\nSlot: ${slot}\nPayment Status: Paid\n\nThank you for choosing Mediclink.`;
+        const patientHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #0f172a; color: #f1f5f9;">
+            <h2 style="color: #3b82f6; text-align: center;">MEDICLINK HMS</h2>
+            <h3 style="color: #f1f5f9; text-align: center;">Appointment Confirmed</h3>
+            <p>Dear ${patientPopulated.user.name},</p>
+            <p>Your payment was successful and your appointment has been confirmed.</p>
+            
+            <div style="background-color: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Doctor:</strong> Dr. ${doctorPopulated.user.name}</p>
+              <p style="margin: 5px 0;"><strong>Date:</strong> ${formattedDate}</p>
+              <p style="margin: 5px 0;"><strong>Time Slot:</strong> ${slot}</p>
+              <p style="margin: 5px 0;"><strong>Payment Status:</strong> <span style="color: #10b981; font-weight: bold;">PAID</span></p>
+            </div>
+            
+            <p style="font-size: 11px; color: #64748b; margin-top: 40px; border-top: 1px solid #334155; padding-top: 20px;">
+              This is an automated notification. Please do not reply directly to this email.
+            </p>
+          </div>
+        `;
+        sendEmail({
+          to: patientPopulated.user.email,
+          subject: patientSubject,
+          text: patientMessage,
+          html: patientHtml
+        }).catch(err => console.error(err));
+      }
+    }
+
+    res.json({ success: true, message: 'Payment verified and appointment confirmed.', appointment });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
