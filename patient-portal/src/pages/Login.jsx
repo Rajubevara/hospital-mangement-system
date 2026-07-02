@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Activity, ShieldAlert, KeyRound, Mail, User, Phone, MapPin, Droplet } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShieldAlert, KeyRound, Mail, User, Phone, MapPin, Activity, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import Logo from '../components/Logo';
+import slide1 from '../assets/slide1.png';
+import slide2 from '../assets/slide2.png';
+import slide3 from '../assets/slide3.png';
 
 const Login = () => {
+  const slides = [slide1, slide2, slide3];
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,9 +21,45 @@ const Login = () => {
   const [address, setAddress] = useState('');
   const [medicalHistory, setMedicalHistory] = useState('');
   const [loading, setLoading] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
 
   const { login, register, error } = useAuth();
   const navigate = useNavigate();
+
+  // Rotating slide features on the left side
+  const features = [
+    {
+      title: "Performance Dashboard",
+      tagline: "Powerful & Easy to Use",
+      desc: "Track your health metrics, vitals, and progress indicators in a modern, easy-to-use interface.",
+      color: "from-cyan-500/20 to-teal-500/20",
+      iconColor: "text-cyan-600 dark:text-cyan-400",
+      badge: "Performance Dashboard"
+    },
+    {
+      title: "Med Manager",
+      tagline: "Access Your Prescriptions",
+      desc: "Access all your prescriptions, chronic conditions, and doctor reports in one unified health vault.",
+      color: "from-emerald-500/20 to-teal-500/20",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+      badge: "Med Manager"
+    },
+    {
+      title: "Smart Consultations",
+      tagline: "Connect Instantly",
+      desc: "Book appointments, chat with top specialists, and manage your follow-ups seamlessly.",
+      color: "from-blue-500/20 to-cyan-500/20",
+      iconColor: "text-blue-600 dark:text-blue-400",
+      badge: "ICD-10 Manager"
+    }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % features.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -30,7 +72,6 @@ const Login = () => {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Split medical history
     const historyArray = medicalHistory
       ? medicalHistory.split(',').map(item => item.trim()).filter(item => item !== '')
       : [];
@@ -51,173 +92,264 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-955 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Background Glows */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl"></div>
-      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl"></div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex transition-colors duration-300">
+      
+      {/* LEFT PANEL: Splendid Visual Slider (Hidden on mobile) */}
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden border-r border-slate-200 dark:border-slate-850 bg-slate-950">
+        
+        {/* Sliding images */}
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={slideIndex}
+            src={slides[slideIndex]}
+            alt="Patient Care Visual"
+            initial={{ opacity: 0, scale: 1.03 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        </AnimatePresence>
+        
+        {/* Subtle dark/gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-slate-950/45 z-10" />
 
-      <div className="w-full max-w-lg relative z-10">
-        {/* Brand Header */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="bg-gradient-to-tr from-blue-600 to-indigo-550 p-3 rounded-2xl shadow-xl shadow-blue-500/20 mb-4">
-            <Activity className="h-8 w-8 text-white animate-pulse" />
+        {/* Top Header Overlay */}
+        <div className="absolute top-8 left-8 right-8 z-20 flex justify-between items-center">
+          <Logo showText={true} size="md" className="text-white" />
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+            <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="text-[10px] font-bold text-white uppercase tracking-wider">CareFlow Patient Portal</span>
           </div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-white">CareFlow</h2>
-          <p className="text-slate-400 mt-2 text-sm">Personal Health Portal</p>
         </div>
 
-        {/* Tab Buttons */}
-        <div className="flex bg-slate-900/60 p-1.5 rounded-2xl border border-slate-850 mb-6 max-w-sm mx-auto">
-          <button
-            onClick={() => setIsRegister(false)}
-            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              !isRegister ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-            }`}
+        {/* Bottom Text Content & Pagination Overlay */}
+        <div className="absolute bottom-12 left-8 right-8 z-20 space-y-6">
+          <div className="space-y-2 max-w-md">
+            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-wider">
+              {features[slideIndex].badge}
+            </span>
+            <h3 className="text-3xl font-extrabold text-white leading-tight tracking-tight">
+              {features[slideIndex].tagline}
+            </h3>
+            <p className="text-slate-300 text-sm leading-relaxed">
+              {features[slideIndex].desc}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between pt-4 border-t border-white/15">
+            <p className="text-xs text-slate-400 font-medium">
+              CareFlow Medical Systems © 2026
+            </p>
+            {/* Pagination Indicators */}
+            <div className="flex gap-2">
+              {features.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSlideIndex(i)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    slideIndex === i ? 'w-8 bg-cyan-455' : 'w-1.5 bg-white/30 hover:bg-white/50'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT PANEL: Sleek, high-contrast, modern form container */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-12 md:p-16 bg-white dark:bg-slate-900 border-l border-transparent dark:border-slate-800 transition-colors duration-300">
+        
+        {/* Header Logo */}
+        <div className="flex justify-between items-center">
+          <Logo showText={true} size="md" />
+          <Link
+            to="/forgot-password"
+            className="text-[11px] font-bold text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
           >
-            Sign In
-          </button>
-          <button
-            onClick={() => setIsRegister(true)}
-            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              isRegister ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Create Account
-          </button>
+            Need Help?
+          </Link>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-slate-900/70 border border-slate-800 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">
+        {/* Form area */}
+        <div className="max-w-md w-full mx-auto my-auto py-8">
+          
+          <div className="mb-6">
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              {isRegister ? "Create your account" : "Login to your account"}
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium leading-relaxed">
+              {isRegister 
+                ? "Enter your personal and medical details to register on CareFlow."
+                : "Log in now to access the latest insights experience for your health portal."
+              }
+            </p>
+          </div>
+
+          {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-950/30 border border-red-900/50 flex items-start gap-3 text-red-400 text-sm animate-pulse">
-              <ShieldAlert className="h-5 w-5 shrink-0 mt-0.5" />
+            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 flex items-start gap-3 text-red-700 dark:text-red-400 text-xs">
+              <ShieldAlert className="h-4.5 w-4.5 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
+          {/* Form tab switcher */}
+          <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800 mb-6 max-w-xs shadow-xs">
+            <button
+              onClick={() => setIsRegister(false)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                !isRegister ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => setIsRegister(true)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                isRegister ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Register
+            </button>
+          </div>
+
           {!isRegister ? (
-            /* Sign In View */
-            <form onSubmit={handleLoginSubmit} className="space-y-5">
+            /* SIGN IN FORM */
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                   <input
                     type="email"
                     required
-                    placeholder="patient@hms.com"
+                    placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 pl-12 pr-4 text-slate-200 placeholder-slate-650 outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 pl-10 pr-4 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-hidden transition-all duration-200 font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Password</label>
-                  <Link to="/forgot-password" style={{ cursor: 'pointer' }} className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors">
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">Password</label>
+                  <Link to="/forgot-password" className="text-[11px] font-bold text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300">
                     Forgot Password?
                   </Link>
                 </div>
                 <div className="relative">
-                  <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                  <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                   <input
                     type="password"
                     required
-                    placeholder="••••••••"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-955 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 pl-12 pr-4 text-slate-200 placeholder-slate-650 outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 pl-10 pr-4 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-hidden transition-all duration-200 font-medium"
                   />
                 </div>
               </div>
 
-              <button
+              <div className="flex items-center gap-2 py-1">
+                <input
+                  type="checkbox"
+                  id="keepSignedIn"
+                  className="h-4 w-4 rounded-sm border-slate-300 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
+                />
+                <label htmlFor="keepSignedIn" className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold cursor-pointer">
+                  Keep me signed in
+                </label>
+              </div>
+
+              <motion.button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+                whileHover={{ scale: 1.005 }}
+                whileTap={{ scale: 0.995 }}
+                className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
               >
-                {loading ? <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'Sign In'}
-              </button>
+                {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'Login'}
+              </motion.button>
             </form>
           ) : (
-            /* Sign Up View */
-            <form onSubmit={handleRegisterSubmit} className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            /* REGISTER FORM */
+            <form onSubmit={handleRegisterSubmit} className="space-y-4 max-h-[48vh] overflow-y-auto pr-1">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Full Name</label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                   <input
                     type="text"
                     required
                     placeholder="e.g. Alice Johnson"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 pl-12 pr-4 text-slate-200 placeholder-slate-650 outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 pl-10 pr-4 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-hidden font-medium"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email</label>
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Email</label>
                   <input
                     type="email"
                     required
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 placeholder-slate-650 outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 px-3.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-hidden font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password</label>
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Password</label>
                   <input
                     type="password"
                     required
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 placeholder-slate-650 outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 px-3.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-hidden font-medium"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Phone</label>
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Phone</label>
                   <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                     <input
                       type="text"
                       required
                       placeholder="e.g. 555-019-2834"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-slate-955 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 pl-11 pr-4 text-slate-200 placeholder-slate-650 outline-none"
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-hidden font-medium"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Date of Birth</label>
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Date of Birth</label>
                   <input
                     type="date"
                     required
                     value={dob}
                     onChange={(e) => setDob(e.target.value)}
-                    className="w-full bg-slate-955 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-white outline-hidden font-medium"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Gender</label>
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Gender</label>
                   <select
                     value={gender}
                     onChange={(e) => setGender(e.target.value)}
-                    className="w-full bg-slate-955 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-white outline-hidden cursor-pointer font-medium"
                   >
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -225,11 +357,11 @@ const Login = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Blood Group</label>
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Blood Group</label>
                   <select
                     value={bloodGroup}
                     onChange={(e) => setBloodGroup(e.target.value)}
-                    className="w-full bg-slate-955 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-white outline-hidden cursor-pointer font-medium"
                   >
                     <option value="A+">A+</option>
                     <option value="A-">A-</option>
@@ -244,52 +376,58 @@ const Login = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Residential Address</label>
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Residential Address</label>
                 <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                   <input
                     type="text"
                     required
                     placeholder="12 Main St, Health City"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    className="w-full bg-slate-955 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 pl-11 pr-4 text-slate-200 placeholder-slate-650 outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 pl-9 pr-4 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-hidden font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Chronic Conditions (comma separated)</label>
+                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Chronic Conditions (comma separated)</label>
                 <input
                   type="text"
                   placeholder="e.g. Asthma, Diabetes"
                   value={medicalHistory}
                   onChange={(e) => setMedicalHistory(e.target.value)}
-                  className="w-full bg-slate-955 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 placeholder-slate-650 outline-none"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/10 rounded-xl py-2.5 px-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-hidden font-medium"
                 />
               </div>
 
-              <button
+              <motion.button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer flex items-center justify-center gap-2 mt-4"
+                whileHover={{ scale: 1.005 }}
+                whileTap={{ scale: 0.995 }}
+                className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 mt-4 text-xs uppercase tracking-wider"
               >
-                {loading ? <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'Register'}
-              </button>
+                {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'Register'}
+              </motion.button>
             </form>
           )}
         </div>
 
-        {/* Demo Credentials Helper */}
-        {!isRegister && (
-          <div className="mt-6 text-center">
-            <p className="text-xs text-slate-600">
-              Use seeded Patient credentials:<br />
-              <span className="font-mono text-slate-500">patient@hms.com / password123</span>
+        {/* Footer Demo Credentials Helper */}
+        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+          {!isRegister && (
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+              Demo Account: <span className="font-mono font-bold text-slate-600 dark:text-slate-350">patient@hms.com / password123</span>
             </p>
-          </div>
-        )}
+          )}
+          <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            CareFlow Health Management System © 2026
+          </p>
+        </div>
+
       </div>
+
     </div>
   );
 };

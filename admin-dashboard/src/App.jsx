@@ -16,12 +16,12 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex bg-slate-950 min-h-screen text-slate-100 font-sans relative overflow-hidden">
+    <div className="flex bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-800 dark:text-slate-100 font-sans relative overflow-hidden">
       {/* Mobile Backdrop Overlay */}
       {sidebarOpen && (
         <div 
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-slate-955/60 backdrop-blur-sm z-30 lg:hidden cursor-pointer"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-30 lg:hidden cursor-pointer"
         />
       )}
 
@@ -29,12 +29,12 @@ const AdminLayout = () => {
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Navbar */}
         <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Dynamic Pages */}
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
           <Outlet />
         </main>
       </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, 
   Plus, 
@@ -8,7 +9,8 @@ import {
   AlertCircle,
   FileCheck,
   UserCheck,
-  CalendarDays
+  CalendarDays,
+  Info
 } from 'lucide-react';
 
 const Schedule = () => {
@@ -130,117 +132,161 @@ const Schedule = () => {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.04 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 15, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 350, damping: 25 } }
+  };
+
   if (loading) {
     return (
-      <div className="flex h-48 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent"></div>
+      <div className="space-y-6">
+        <div className="h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl animate-pulse"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="h-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl animate-pulse"></div>
+          <div className="h-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl animate-pulse lg:col-span-2"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-6 max-w-7xl mx-auto"
+    >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Schedule & Profile</h1>
-          <p className="text-slate-400 mt-1">Configure your weekly consulting hours, fee structures, and biography details.</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span>Schedule & Profile</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Configure your weekly consulting hours, fee structures, and biography details.</p>
         </div>
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={handleSave}
           disabled={saving}
-          className="bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-teal-500/10 transition-all duration-200 w-full sm:w-auto"
+          className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors duration-200 w-full sm:w-auto"
         >
           {saving ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
           ) : (
             <>
-              <Save className="h-5 w-5" />
+              <Save className="h-4 w-4" />
               <span>Save Schedule</span>
             </>
           )}
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Messages */}
-      {error && (
-        <div className="p-4 bg-red-950/20 border border-red-900/40 text-red-400 rounded-2xl flex items-center gap-3 text-sm">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-      {successMsg && (
-        <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 rounded-2xl flex items-center gap-3 text-sm">
-          <FileCheck className="h-5 w-5 shrink-0" />
-          <span>{successMsg}</span>
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-xl flex items-center gap-3 text-xs"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+        {successMsg && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center gap-3 text-xs"
+          >
+            <FileCheck className="h-4 w-4 shrink-0" />
+            <span>{successMsg}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Details Form */}
-        <div className="bg-slate-900/80 border border-slate-850 rounded-3xl p-6 lg:col-span-1 space-y-5">
-          <h3 className="text-base font-bold text-slate-100 flex items-center gap-2 pb-3 border-b border-slate-850">
-            <UserCheck className="h-5 w-5 text-teal-400" />
-            <span>Consultant Card</span>
+        <motion.div 
+          variants={itemVariants}
+          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 lg:col-span-1 space-y-4 shadow-xs"
+        >
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <UserCheck className="h-4 w-4 text-teal-600" />
+            <span>Consultant Details</span>
           </h3>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-455 uppercase tracking-wider mb-2">Qualifications</label>
+              <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Qualifications</label>
               <input
                 type="text"
                 value={qualification}
                 onChange={(e) => setQualification(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-855 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-sm text-slate-200 outline-none"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 outline-hidden"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-455 uppercase tracking-wider mb-2">Experience (Yrs)</label>
+                <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Experience (Yrs)</label>
                 <input
                   type="number"
                   min={0}
                   value={experience}
                   onChange={(e) => setExperience(parseInt(e.target.value) || 0)}
-                  className="w-full bg-slate-955 border border-slate-855 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-sm text-slate-200 outline-none"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-455 uppercase tracking-wider mb-2">Consultation Fee ($)</label>
+                <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Consultation Fee (₹)</label>
                 <input
                   type="number"
                   min={0}
                   value={consultationFee}
                   onChange={(e) => setConsultationFee(parseInt(e.target.value) || 0)}
-                  className="w-full bg-slate-955 border border-slate-855 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-sm text-slate-200 outline-none"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 outline-hidden"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-450 uppercase tracking-wider mb-2">Biography Profile</label>
+              <label className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Biography Profile</label>
               <textarea
                 rows={5}
                 value={biography}
                 onChange={(e) => setBiography(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-sm text-slate-200 outline-none resize-none"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 outline-hidden resize-none"
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Schedule Slots Form */}
-        <div className="bg-slate-900/80 border border-slate-850 rounded-3xl p-6 lg:col-span-2 space-y-6">
-          <div className="flex justify-between items-center pb-3 border-b border-slate-850">
-            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-teal-400" />
+        <motion.div 
+          variants={itemVariants}
+          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 lg:col-span-2 space-y-6 shadow-xs"
+        >
+          <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-teal-600" />
               <span>Weekly Availability Slots</span>
             </h3>
             <button
               onClick={handleAddDay}
-              className="text-xs font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1 cursor-pointer"
+              className="text-xs font-bold text-teal-605 hover:text-teal-700 flex items-center gap-1 cursor-pointer"
             >
               <Plus size={14} />
               <span>Add Day</span>
@@ -248,19 +294,20 @@ const Schedule = () => {
           </div>
 
           {availability.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 text-sm">
-              No consulting availability configured. Click "Add Day" to add hours.
+            <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
+              <Info className="h-8 w-8 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
+              <p>No consulting availability configured. Click "Add Day" to add slots.</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {availability.map((avail, dayIdx) => (
-                <div key={dayIdx} className="p-4 bg-slate-950/40 border border-slate-850 rounded-2xl space-y-4">
+                <div key={dayIdx} className="p-4 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 rounded-2xl space-y-3">
                   {/* Day Header */}
                   <div className="flex justify-between items-center">
                     <select
                       value={avail.day}
                       onChange={(e) => handleDayChange(dayIdx, e.target.value)}
-                      className="bg-slate-900 border border-slate-800 rounded-xl py-1.5 px-3 text-sm text-slate-200 outline-none font-semibold cursor-pointer"
+                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-800 dark:text-slate-200 outline-hidden font-bold cursor-pointer"
                     >
                       <option value="Monday">Monday</option>
                       <option value="Tuesday">Tuesday</option>
@@ -273,7 +320,7 @@ const Schedule = () => {
 
                     <button
                       onClick={() => handleRemoveDay(dayIdx)}
-                      className="text-slate-500 hover:text-red-400 transition-colors p-1"
+                      className="text-slate-400 hover:text-red-500 transition-colors p-1"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -282,32 +329,32 @@ const Schedule = () => {
                   {/* Slots list */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Configured Hours (24-Hour Format)</span>
+                      <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Configured Hours (24-Hour Format)</span>
                       <button
                         type="button"
                         onClick={() => handleAddSlot(dayIdx)}
-                        className="text-[10px] font-bold text-teal-400 hover:text-teal-350 flex items-center gap-0.5 cursor-pointer"
+                        className="text-[10px] font-bold text-teal-605 hover:text-teal-700 flex items-center gap-0.5 cursor-pointer"
                       >
                         <Plus size={12} />
                         <span>Add Slot</span>
                       </button>
                     </div>
 
-                    <div className="flex flex-wrap gap-2.5">
+                    <div className="flex flex-wrap gap-2">
                       {avail.slots?.map((slot, slotIdx) => (
-                        <div key={slotIdx} className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 py-1.5 px-3 rounded-xl">
-                          <Clock size={12} className="text-slate-500" />
+                        <div key={slotIdx} className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 py-1.5 px-2.5 rounded-xl">
+                          <Clock size={12} className="text-slate-400 dark:text-slate-500" />
                           <input
                             type="text"
                             placeholder="09:00"
                             value={slot}
                             onChange={(e) => handleSlotChange(dayIdx, slotIdx, e.target.value)}
-                            className="bg-transparent text-xs font-mono font-semibold text-slate-200 outline-none w-10 text-center"
+                            className="bg-transparent text-xs font-mono font-bold text-slate-700 dark:text-slate-200 outline-hidden w-10 text-center"
                           />
                           <button
                             type="button"
                             onClick={() => handleRemoveSlot(dayIdx, slotIdx)}
-                            className="text-slate-500 hover:text-red-400 p-0.5"
+                            className="text-slate-400 hover:text-red-500 p-0.5"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -319,9 +366,9 @@ const Schedule = () => {
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

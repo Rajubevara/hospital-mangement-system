@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Stethoscope, 
   Plus, 
@@ -12,7 +13,10 @@ import {
   UserCheck, 
   UserX,
   X,
-  AlertCircle
+  AlertCircle,
+  Briefcase,
+  BookOpen,
+  Info
 } from 'lucide-react';
 
 const Doctors = () => {
@@ -125,122 +129,176 @@ const Doctors = () => {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 15, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 350, damping: 25 } }
+  };
+
   return (
-    <div className="space-y-8">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-6 max-w-7xl mx-auto"
+    >
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Doctor Directory</h1>
-          <p className="text-slate-400 mt-1">Manage clinical staff registry, schedules, and active consultation fees.</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span>Doctor Directory</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Manage clinical staff registry, schedules, and active consultation fees.</p>
         </div>
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setIsCreateOpen(true)}
-          className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-xl flex items-center gap-2 cursor-pointer shadow-lg shadow-blue-500/10 transition-all duration-200"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 px-4 rounded-xl flex items-center gap-2 cursor-pointer shadow-xs transition-all duration-200"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-4 w-4" />
           <span>Add Doctor</span>
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Messages */}
-      {error && (
-        <div className="p-4 bg-red-950/20 border border-red-900/40 text-red-400 rounded-2xl flex items-center gap-3 text-sm">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-      {successMsg && (
-        <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 rounded-2xl flex items-center gap-3 text-sm">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          <span>{successMsg}</span>
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-xl flex items-center gap-3 text-xs"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+        {successMsg && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center gap-3 text-xs"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{successMsg}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {loading ? (
-        <div className="flex h-48 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 space-y-4 animate-pulse">
+              <div className="flex gap-4">
+                <div className="h-16 w-16 bg-slate-200 dark:bg-slate-800 rounded-2xl shrink-0"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-6 w-32 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                  <div className="h-4 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                </div>
+              </div>
+              <div className="h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+            </div>
+          ))}
         </div>
       ) : doctors.length === 0 ? (
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-12 text-center text-slate-500">
-          No doctor profiles registered. Click "Add Doctor" to provision one.
-        </div>
+        <motion.div 
+          variants={itemVariants}
+          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-12 text-center text-slate-400 dark:text-slate-500 shadow-xs"
+        >
+          <Info className="h-10 w-10 text-slate-300 dark:text-slate-650 mx-auto mb-3" />
+          <p className="text-sm">No doctor profiles registered. Click "Add Doctor" to provision one.</p>
+        </motion.div>
       ) : (
         /* Doctor list */
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <motion.div 
+          variants={containerVariants}
+          className="grid grid-cols-1 xl:grid-cols-2 gap-6"
+        >
           {doctors.map((doc) => (
-            <div 
+            <motion.div 
               key={doc._id}
-              className="bg-slate-900/80 border border-slate-850 rounded-3xl p-6 flex flex-col justify-between shadow-lg relative group overflow-hidden"
+              variants={itemVariants}
+              whileHover={{ y: -4, boxShadow: '0 10px 20px -5px rgba(0, 0, 0, 0.04)' }}
+              className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700/80 rounded-3xl p-6 flex flex-col justify-between shadow-xs transition-colors relative group overflow-hidden"
             >
               {/* Top Details */}
               <div className="flex items-start gap-4">
-                <div className="h-16 w-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-xl font-bold shadow-md shadow-blue-500/10 shrink-0">
+                <div className="h-14 w-14 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-lg font-bold shadow-inner shrink-0">
                   {doc.user?.name ? doc.user.name.replace('Dr. ', '').split(' ').map(n => n[0]).join('').toUpperCase() : <Stethoscope />}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-lg font-bold text-white truncate">{doc.user?.name || 'Doctor Name'}</h3>
-                    <span className="text-xs px-2.5 py-1 bg-blue-500/10 border border-blue-500/15 text-blue-400 rounded-full font-medium">
+                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 truncate">{doc.user?.name || 'Doctor Name'}</h3>
+                    <span className="text-[10px] px-2 py-0.5 bg-blue-50 dark:bg-blue-950/35 border border-blue-100 dark:border-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full font-semibold">
                       {doc.specialty?.name || 'General Medicine'}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-400 mt-1 truncate">{doc.qualification}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">{doc.qualification}</p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4 text-xs text-slate-400">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4 text-[11px] text-slate-500 dark:text-slate-400">
                     <div className="flex items-center gap-2">
-                      <Mail className="h-3.5 w-3.5 text-slate-500" />
-                      <span>{doc.user?.email}</span>
+                      <Mail className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="truncate">{doc.user?.email}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Phone className="h-3.5 w-3.5 text-slate-500" />
+                      <Phone className="h-3.5 w-3.5 text-slate-400" />
                       <span>{doc.user?.phone}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Award className="h-3.5 w-3.5 text-slate-500" />
+                      <Briefcase className="h-3.5 w-3.5 text-slate-400" />
                       <span>{doc.experience} Years Experience</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <DollarSign className="h-3.5 w-3.5 text-slate-500" />
-                      <span>Fee: ${doc.consultationFee}</span>
+                      <DollarSign className="h-3.5 w-3.5 text-slate-400" />
+                      <span>Fee: ₹{doc.consultationFee}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Weekly Availability Summary */}
-              <div className="mt-6 p-3.5 bg-slate-950/40 border border-slate-850 rounded-2xl">
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block mb-2">Availability Schedule</span>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 rounded-2xl">
+                <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5">Availability Schedule</span>
+                <div className="flex flex-wrap gap-1">
                   {doc.availability?.map((avail, i) => (
-                    <span key={i} className="text-[10px] px-2 py-0.5 bg-slate-800 text-slate-300 rounded font-medium">
+                    <span key={i} className="text-[9px] px-2 py-0.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-md font-medium">
                       {avail.day}: {avail.slots?.length || 0} slots
                     </span>
                   ))}
                   {(!doc.availability || doc.availability.length === 0) && (
-                    <span className="text-xs text-slate-600">No schedule slots configured</span>
+                    <span className="text-xs text-slate-400">No schedule slots configured</span>
                   )}
                 </div>
               </div>
 
               {/* Actions Footer */}
-              <div className="mt-6 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <button
                   onClick={() => handleToggleStatus(doc)}
-                  className={`text-xs px-3.5 py-1.5 rounded-xl font-semibold border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                  className={`text-[10px] px-3 py-1.5 rounded-xl font-bold border flex items-center gap-1.5 transition-all cursor-pointer ${
                     doc.user?.isActive
-                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-red-950/20 hover:text-red-400 hover:border-red-900/30'
-                      : 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-emerald-950/20 hover:text-emerald-400 hover:border-emerald-900/30'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-900/10 text-emerald-600 dark:text-emerald-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-900/20'
+                      : 'bg-red-50 dark:bg-red-950/10 border-red-200 dark:border-red-900/10 text-red-600 dark:text-red-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-200 dark:hover:border-emerald-900/20'
                   }`}
                 >
                   {doc.user?.isActive ? (
                     <>
-                      <UserCheck className="h-4 w-4" />
+                      <UserCheck className="h-3.5 w-3.5" />
                       <span>Active (Disable)</span>
                     </>
                   ) : (
                     <>
-                      <UserX className="h-4 w-4" />
+                      <UserX className="h-3.5 w-3.5" />
                       <span>Disabled (Activate)</span>
                     </>
                   )}
@@ -248,172 +306,188 @@ const Doctors = () => {
 
                 <button
                   onClick={() => handleDelete(doc._id)}
-                  className="text-xs px-3 py-1.5 bg-slate-850 hover:bg-red-950/30 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-900/30 rounded-xl transition-all cursor-pointer flex items-center gap-1"
+                  className="text-[10px] px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 border border-slate-200 dark:border-slate-800 hover:border-red-100 dark:hover:border-red-900/10 rounded-xl transition-all cursor-pointer flex items-center gap-1 font-bold"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                   <span>Remove Profile</span>
                 </button>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Provision Doctor Modal */}
-      {isCreateOpen && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl relative">
-            <button 
+      <AnimatePresence>
+        {isCreateOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setIsCreateOpen(false)}
-              className="absolute right-6 top-6 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
+            />
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', duration: 0.4 }}
+              className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl w-full max-w-xl overflow-hidden shadow-xl relative z-10"
             >
-              <X className="h-5 w-5" />
-            </button>
+              <button 
+                onClick={() => setIsCreateOpen(false)}
+                className="absolute right-5 top-5 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
 
-            <div className="p-6 border-b border-slate-850">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Stethoscope className="h-5 w-5 text-blue-500" />
-                <span>Register & Provision Doctor Profile</span>
-              </h3>
-            </div>
+              <div className="p-6 border-b border-slate-100 dark:border-slate-900">
+                <h3 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                  <Stethoscope className="h-5 w-5 text-blue-600" />
+                  <span>Register Doctor Profile</span>
+                </h3>
+              </div>
 
-            <form onSubmit={handleCreateSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Doctor Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Dr. Sarah Jenkins"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 placeholder-slate-600 outline-none transition-all duration-200"
-                  />
+              <form onSubmit={handleCreateSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Doctor Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Dr. Sarah Jenkins"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-hidden transition-all duration-205"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="doctor@example.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-hidden transition-all duration-205"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Password Login</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-hidden transition-all duration-205"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Phone Number</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 555-123-4567"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-hidden transition-all duration-205"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Department Specialty</label>
+                    <select
+                      required
+                      value={formData.specialty}
+                      onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 outline-hidden transition-all duration-205"
+                    >
+                      {specialties.map((spec) => (
+                        <option key={spec._id} value={spec._id}>{spec.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Years of Experience</label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      value={formData.experience}
+                      onChange={(e) => setFormData({ ...formData, experience: parseInt(e.target.value) || 0 })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 outline-hidden transition-all duration-205"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Academic Qualification</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. MD, PhD in Cardiology"
+                      value={formData.qualification}
+                      onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-hidden transition-all duration-205"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Consultation Fee (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      value={formData.consultationFee}
+                      onChange={(e) => setFormData({ ...formData, consultationFee: parseInt(e.target.value) || 0 })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 outline-hidden transition-all duration-205"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
-                  <input
-                    type="email"
+                  <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Professional Biography</label>
+                  <textarea
                     required
-                    placeholder="doctor@example.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 placeholder-slate-600 outline-none transition-all duration-200"
+                    rows={3}
+                    placeholder="Provide details of past credentials, experience, and clinical focus..."
+                    value={formData.biography}
+                    onChange={(e) => setFormData({ ...formData, biography: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-hidden transition-all duration-205 resize-none"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password Login</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 placeholder-slate-600 outline-none transition-all duration-200"
-                  />
+                <div className="text-[10px] text-slate-500 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 leading-relaxed">
+                  <strong>Schedule note:</strong> Creating a doctor profile will automatically allocate a standard template schedule (Mon, Wed, Fri slots: 9 AM - 3 PM) which the doctor can customize from their personal doctor portal profile.
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Phone Number</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. 555-123-4567"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 placeholder-slate-600 outline-none transition-all duration-200"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Department Specialty</label>
-                  <select
-                    required
-                    value={formData.specialty}
-                    onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-855 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 outline-none transition-all duration-200"
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateOpen(false)}
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                   >
-                    {specialties.map((spec) => (
-                      <option key={spec._id} value={spec._id}>{spec.name}</option>
-                    ))}
-                  </select>
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                  >
+                    Provision Profile
+                  </button>
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Years of Experience</label>
-                  <input
-                    type="number"
-                    required
-                    min={0}
-                    value={formData.experience}
-                    onChange={(e) => setFormData({ ...formData, experience: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 outline-none transition-all duration-200"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Academic Qualification</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. MD, PhD in Cardiology"
-                    value={formData.qualification}
-                    onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 placeholder-slate-600 outline-none transition-all duration-200"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Consultation Fee ($)</label>
-                  <input
-                    type="number"
-                    required
-                    min={0}
-                    value={formData.consultationFee}
-                    onChange={(e) => setFormData({ ...formData, consultationFee: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 outline-none transition-all duration-200"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Professional Biography</label>
-                <textarea
-                  required
-                  rows={3}
-                  placeholder="Provide details of past research, special achievements, and focus areas..."
-                  value={formData.biography}
-                  onChange={(e) => setFormData({ ...formData, biography: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 px-4 text-slate-200 placeholder-slate-600 outline-none transition-all duration-200 resize-none"
-                />
-              </div>
-
-              <div className="text-xs text-slate-500 bg-slate-950/40 border border-slate-850 rounded-2xl p-4 leading-relaxed">
-                <strong>Schedule note:</strong> Creating a doctor profile will automatically allocate a standard template schedule (Mon, Wed, Fri slots: 9 AM - 3 PM) which the doctor can customize from their personal doctor portal profile.
-              </div>
-
-              <div className="pt-4 border-t border-slate-850 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-xl font-semibold transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/10 transition-colors cursor-pointer"
-                >
-                  Provision Profile
-                </button>
-              </div>
-            </form>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

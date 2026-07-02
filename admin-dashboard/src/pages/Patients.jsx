@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
   Search, 
   MapPin, 
   Droplet, 
-  Heart, 
   ChevronRight, 
   X, 
   Calendar,
   AlertCircle,
-  FolderHeart
+  FolderHeart,
+  User,
+  HeartPulse,
+  Info
 } from 'lucide-react';
 
 const Patients = () => {
@@ -63,59 +66,98 @@ const Patients = () => {
     p.user?.phone?.includes(searchTerm)
   );
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.04 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 12, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 350, damping: 25 } }
+  };
+
   return (
     <div className="relative">
-      <div className={`space-y-8 transition-all duration-300 ${selectedPatientId ? 'pr-96' : ''}`}>
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className={`space-y-6 max-w-7xl mx-auto transition-all duration-300 ${selectedPatientId ? 'lg:pr-96' : ''}`}
+      >
         {/* Header */}
-        <div className="flex justify-between items-center flex-wrap gap-4">
+        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Patient Directory</h1>
-            <p className="text-slate-400 mt-1 font-medium text-sm">View registered patient accounts and clinical histories.</p>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span>Patient Directory</span>
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">View registered patient accounts, details and medical records.</p>
           </div>
           
-          <div className="relative w-72">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
-              placeholder="Search by name, email..."
+              placeholder="Search patients..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-850 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2.5 pl-11 pr-4 text-slate-200 placeholder-slate-600 outline-none transition-all duration-200"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500 rounded-xl py-2 pl-9 pr-4 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-hidden transition-all duration-200"
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* Content */}
         {error && (
-          <div className="p-4 bg-red-950/20 border border-red-900/40 text-red-400 rounded-2xl flex items-center gap-3 text-sm">
-            <AlertCircle className="h-5 w-5 shrink-0" />
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-650 dark:text-red-400 rounded-xl flex items-center gap-3 text-xs"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
-          </div>
+          </motion.div>
         )}
 
         {loading ? (
-          <div className="flex h-48 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 space-y-4 animate-pulse shadow-xs">
+            <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-full"></div>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex justify-between items-center gap-4 py-2">
+                <div className="h-8 w-8 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+                <div className="h-4 w-1/3 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                <div className="h-4 w-1/4 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                <div className="h-4 w-12 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+              </div>
+            ))}
           </div>
         ) : filteredPatients.length === 0 ? (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-12 text-center text-slate-500">
-            {searchTerm ? 'No matches found for search term.' : 'No registered patient records available.'}
-          </div>
+          <motion.div 
+            variants={itemVariants}
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-12 text-center text-slate-400 dark:text-slate-500 shadow-xs"
+          >
+            <Info className="h-10 w-10 text-slate-300 dark:text-slate-650 mx-auto mb-3" />
+            <p className="text-sm">{searchTerm ? 'No matching patient records found.' : 'No registered patient records available.'}</p>
+          </motion.div>
         ) : (
           /* Patients Table List */
-          <div className="bg-slate-900/80 border border-slate-850 rounded-3xl overflow-hidden shadow-xl">
+          <motion.div 
+            variants={itemVariants}
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl overflow-hidden shadow-xs"
+          >
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-950/20">
-                    <th className="py-4 px-6">Patient Name</th>
-                    <th className="py-4 px-6">Email / Contact</th>
-                    <th className="py-4 px-6">Gender / Age</th>
-                    <th className="py-4 px-6 text-center">Blood</th>
-                    <th className="py-4 px-6 text-right">Records</th>
+                  <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50/50 dark:bg-slate-950/20">
+                    <th className="py-3 px-6">Patient Details</th>
+                    <th className="py-3 px-6">Contact Info</th>
+                    <th className="py-3 px-6">Gender / Age</th>
+                    <th className="py-3 px-6 text-center">Blood Type</th>
+                    <th className="py-3 px-6 text-right"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-sm">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
                   {filteredPatients.map((p) => {
                     const dob = p.dateOfBirth ? new Date(p.dateOfBirth) : null;
                     const age = dob ? new Date().getFullYear() - dob.getFullYear() : 'N/A';
@@ -123,29 +165,33 @@ const Patients = () => {
                       <tr 
                         key={p._id} 
                         onClick={() => handleOpenDetail(p._id)}
-                        className={`hover:bg-slate-850/40 transition-colors cursor-pointer group ${selectedPatientId === p._id ? 'bg-blue-600/5' : ''}`}
+                        className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer group ${selectedPatientId === p._id ? 'bg-blue-50/30 dark:bg-blue-950/10' : ''}`}
                       >
-                        <td className="py-4 px-6 font-bold text-white flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-xl bg-slate-850 flex items-center justify-center text-blue-400 font-semibold group-hover:bg-slate-800 transition-colors">
-                            {p.user?.name ? p.user.name.split(' ').map(n => n[0]).join('').toUpperCase() : <Users size={16} />}
+                        <td className="py-3 px-6 font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100/50 dark:border-blue-900/10 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold group-hover:scale-105 transition-transform">
+                            {p.user?.name ? p.user.name.split(' ').map(n => n[0]).join('').toUpperCase() : <User size={14} />}
                           </div>
-                          <span>{p.user?.name}</span>
+                          <span className="group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{p.user?.name}</span>
                         </td>
-                        <td className="py-4 px-6">
-                          <p className="text-slate-300 font-medium">{p.user?.email}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{p.user?.phone || 'No phone'}</p>
+                        <td className="py-3 px-6">
+                          <p className="text-slate-700 dark:text-slate-350">{p.user?.email}</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">{p.user?.phone || 'No phone record'}</p>
                         </td>
-                        <td className="py-4 px-6 text-slate-300">
+                        <td className="py-3 px-6 text-slate-600 dark:text-slate-400">
                           {p.gender || 'Unknown'} / {age} Yrs
                         </td>
-                        <td className="py-4 px-6 text-center">
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/15 text-red-400">
-                            <Droplet size={10} className="fill-red-400/20" />
-                            {p.bloodGroup || 'N/A'}
-                          </span>
+                        <td className="py-3 px-6 text-center">
+                          {p.bloodGroup ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/20 text-red-650 dark:text-red-400">
+                              <Droplet size={9} className="fill-red-500/20" />
+                              {p.bloodGroup}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
                         </td>
-                        <td className="py-4 px-6 text-right">
-                          <ChevronRight className="inline h-5 w-5 text-slate-600 group-hover:text-slate-400 transition-colors" />
+                        <td className="py-3 px-6 text-right">
+                          <ChevronRight className="inline h-4 w-4 text-slate-400 group-hover:translate-x-1 group-hover:text-blue-500 transition-all" />
                         </td>
                       </tr>
                     );
@@ -153,118 +199,137 @@ const Patients = () => {
                 </tbody>
               </table>
             </div>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       {/* Patient Detail Drawer */}
-      {selectedPatientId && (
-        <div className="fixed top-16 right-0 bottom-0 w-96 bg-slate-900 border-l border-slate-850 shadow-2xl z-20 flex flex-col justify-between">
-          {/* Drawer Header */}
-          <div className="p-6 border-b border-slate-850 flex items-center justify-between">
-            <h3 className="font-bold text-white flex items-center gap-2">
-              <FolderHeart className="h-5 w-5 text-blue-500" />
-              <span>Patient Profile</span>
-            </h3>
-            <button 
+      <AnimatePresence>
+        {selectedPatientId && (
+          <div className="fixed top-16 right-0 bottom-0 z-20 flex">
+            {/* Mobile overlay backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setSelectedPatientId(null)}
-              className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+              className="fixed inset-0 bg-slate-900/10 backdrop-blur-xs lg:hidden"
+            />
+            
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+              className="w-96 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl h-full flex flex-col justify-between relative"
             >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Drawer Body */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {detailLoading ? (
-              <div className="flex h-64 items-center justify-center">
-                <div className="h-6 w-6 animate-spin rounded-full border-3 border-blue-500 border-t-transparent"></div>
+              {/* Drawer Header */}
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2 text-sm">
+                  <FolderHeart className="h-4 w-4 text-blue-600" />
+                  <span>Patient Medical Dossier</span>
+                </h3>
+                <button 
+                  onClick={() => setSelectedPatientId(null)}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-            ) : detailData ? (
-              <>
-                {/* General Bio */}
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="h-16 w-16 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-xl font-bold shadow-md shadow-blue-500/15 mb-3">
-                      {detailData.patient.user?.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
-                    </div>
-                    <h4 className="font-bold text-white text-lg">{detailData.patient.user?.name}</h4>
-                    <p className="text-xs text-slate-500 font-mono mt-0.5">ID: {detailData.patient._id}</p>
-                  </div>
 
-                  <div className="space-y-2.5 text-sm text-slate-300 bg-slate-950/40 p-4 border border-slate-850 rounded-2xl">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Gender</span>
-                      <span>{detailData.patient.gender || 'Not specified'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Age</span>
-                      <span>{detailData.patient.dateOfBirth ? `${new Date().getFullYear() - new Date(detailData.patient.dateOfBirth).getFullYear()} years` : 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Blood Group</span>
-                      <span className="text-red-400 font-semibold">{detailData.patient.bloodGroup || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-start justify-between gap-4">
-                      <span className="text-slate-500 shrink-0">Address</span>
-                      <span className="text-right flex items-center gap-1 text-xs">
-                        <MapPin size={12} className="text-slate-500 shrink-0" />
-                        {detailData.patient.address || 'No address added'}
-                      </span>
-                    </div>
+              {/* Drawer Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {detailLoading ? (
+                  <div className="flex h-64 items-center justify-center">
+                    <div className="h-6 w-6 animate-spin rounded-full border-3 border-blue-500 border-t-transparent"></div>
                   </div>
-                </div>
-
-                {/* Medical History Conditions */}
-                <div className="space-y-3">
-                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Chronic Conditions</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {detailData.patient.medicalHistory?.map((condition, i) => (
-                      <span key={i} className="text-xs px-2.5 py-1 bg-red-500/10 border border-red-500/15 text-red-400 rounded-lg font-medium">
-                        {condition}
-                      </span>
-                    ))}
-                    {(!detailData.patient.medicalHistory || detailData.patient.medicalHistory.length === 0) && (
-                      <span className="text-xs text-slate-500 italic">No medical history conditions declared</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Appointments History */}
-                <div className="space-y-3">
-                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Clinical Visit Log</span>
-                  {detailData.appointments?.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic">No recorded clinical appointments.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {detailData.appointments?.map((app) => (
-                        <div key={app._id} className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl space-y-1.5">
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="font-semibold text-slate-200">{app.doctor?.user?.name || 'Doctor'}</span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              app.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15' :
-                              app.status === 'Confirmed' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/15' :
-                              'bg-amber-500/10 text-amber-400 border border-amber-500/15'
-                            }`}>
-                              {app.status}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                            <Calendar size={12} />
-                            <span>{new Date(app.date).toLocaleDateString()} at {app.slot}</span>
-                          </div>
+                ) : detailData ? (
+                  <>
+                    {/* General Bio */}
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <div className="h-14 w-14 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100/50 dark:border-blue-900/15 flex items-center justify-center text-blue-600 dark:text-blue-400 text-lg font-bold shadow-inner mb-3">
+                          {detailData.patient.user?.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
                         </div>
-                      ))}
+                        <h4 className="font-bold text-slate-800 dark:text-white text-base">{detailData.patient.user?.name}</h4>
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">UID: {detailData.patient._id}</p>
+                      </div>
+
+                      <div className="space-y-2 text-xs text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950/40 p-4 border border-slate-100 dark:border-slate-800 rounded-2xl">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Gender</span>
+                          <span className="font-medium">{detailData.patient.gender || 'Not declared'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Age</span>
+                          <span className="font-medium">{detailData.patient.dateOfBirth ? `${new Date().getFullYear() - new Date(detailData.patient.dateOfBirth).getFullYear()} Yrs` : 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Blood Type</span>
+                          <span className="text-red-500 dark:text-red-400 font-semibold">{detailData.patient.bloodGroup || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-start justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-800/50">
+                          <span className="text-slate-400 shrink-0">Home Address</span>
+                          <span className="text-right flex items-center gap-1 text-[11px]">
+                            <MapPin size={11} className="text-slate-400 shrink-0" />
+                            {detailData.patient.address || 'No registered address'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-slate-500">Failed to load detail report.</p>
-            )}
+
+                    {/* Medical History Conditions */}
+                    <div className="space-y-2">
+                      <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Chronic Conditions</span>
+                      <div className="flex flex-wrap gap-1">
+                        {detailData.patient.medicalHistory?.map((condition, i) => (
+                          <span key={i} className="text-[10px] px-2 py-0.5 bg-red-50 dark:bg-red-950/15 border border-red-100/50 dark:border-red-900/10 text-red-650 dark:text-red-400 rounded-md font-medium">
+                            {condition}
+                          </span>
+                        ))}
+                        {(!detailData.patient.medicalHistory || detailData.patient.medicalHistory.length === 0) && (
+                          <span className="text-xs text-slate-400 italic">No medical history conditions declared</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Appointments History */}
+                    <div className="space-y-3">
+                      <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Clinical Visit Log</span>
+                      {detailData.appointments?.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic">No recorded clinical appointments.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {detailData.appointments?.map((app) => (
+                            <div key={app._id} className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 rounded-xl space-y-1.5">
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="font-semibold text-slate-800 dark:text-slate-200">{app.doctor?.user?.name || 'Doctor'}</span>
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                                  app.status === 'Completed' ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/10' :
+                                  app.status === 'Confirmed' ? 'bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/10' :
+                                  'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/10'
+                                }`}>
+                                  {app.status}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-[9px] text-slate-400">
+                                <Calendar size={11} />
+                                <span>{new Date(app.date).toLocaleDateString()} at {app.slot}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-500">Failed to load dossier report.</p>
+                )}
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };

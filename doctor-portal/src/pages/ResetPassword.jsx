@@ -41,7 +41,7 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-955 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <h2 className="mt-6 text-3xl font-extrabold text-white tracking-tight">
           Reset Password
@@ -52,7 +52,7 @@ const ResetPassword = () => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-slate-900 border border-slate-850 py-8 px-4 shadow-xl rounded-3xl sm:px-10">
+        <div className="bg-slate-900 border border-slate-800 py-8 px-4 shadow-xl rounded-3xl sm:px-10">
           {error && (
             <div className="mb-4 p-4 bg-red-950/20 border border-red-900/40 text-red-400 rounded-2xl flex items-center gap-3 text-sm">
               <AlertCircle className="h-5 w-5 shrink-0" />
@@ -84,7 +84,7 @@ const ResetPassword = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-955 border border-slate-850 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-3 pl-10 pr-4 text-slate-200 placeholder-slate-650 outline-none transition-all duration-200"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-3 pl-10 pr-4 text-slate-200 placeholder-slate-650 outline-none transition-all duration-200"
                   />
                 </div>
               </div>
@@ -104,7 +104,7 @@ const ResetPassword = () => {
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full bg-slate-955 border border-slate-850 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-3 pl-10 pr-4 text-slate-200 placeholder-slate-650 outline-none transition-all duration-200"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500 rounded-xl py-3 pl-10 pr-4 text-slate-200 placeholder-slate-650 outline-none transition-all duration-200"
                   />
                 </div>
               </div>
